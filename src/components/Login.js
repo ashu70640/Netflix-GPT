@@ -7,14 +7,15 @@ import {
   updateProfile,
 } from "firebase/auth";
 import { auth } from "../utils/firebase";
-import { useNavigate } from "react-router-dom";
+
 import { useDispatch } from "react-redux";
 import { addUser } from "../utils/userSlice";
+import { USER_AVATAR } from "../utils/constants";
 
 const Login = () => {
   const [isSignInForm, setIsSignInForm] = useState(true);
   const [errorMessage, setErrorMessage] = useState(null);
-  const navigate = useNavigate();
+
   const dispatch = useDispatch();
   const email = useRef(null);
   const password = useRef(null);
@@ -22,6 +23,7 @@ const Login = () => {
   const handleButtonClick = () => {
     //validate the form data
     //checkValidData(email, password);
+
     const message = isSignInForm
       ? checkValidData(email.current.value, password.current.value)
       : checkValidData(
@@ -45,8 +47,32 @@ const Login = () => {
         .then((userCredential) => {
           // Signed up
           const user = userCredential.user;
-          console.log(user);
-          navigate("/browse");
+          updateProfile(user, {
+            displayName: name.current.value,
+            photoURL: USER_AVATAR,
+          })
+            .then(() => {
+              // Profile updated!
+
+              const { uid, email, displayName, photoURL } = auth.currentUser;
+              dispatch(
+                addUser({
+                  uid: uid,
+                  email: email,
+                  displayName: displayName,
+                  photoURL: photoURL,
+                })
+              );
+
+              // ...
+            })
+            .catch((error) => {
+              // An error occurred
+
+              setErrorMessage(error.message);
+              // ...
+            });
+
           // ...
         })
         .catch((error) => {
@@ -57,6 +83,7 @@ const Login = () => {
         });
     } else {
       //Sign In Logic
+
       signInWithEmailAndPassword(
         auth,
         email.current.value,
@@ -64,37 +91,15 @@ const Login = () => {
       )
         .then((userCredential) => {
           // Signed in
+
           const user = userCredential.user;
-          updateProfile(user, {
-            displayName: name.current.value,
-            photoURL: "https://avatars.githubusercontent.com/u/77788370?v=4",
-          })
-            .then(() => {
-              // Profile updated!
-              const { uid, email, displayName, photoURL } = auth.currentUser;
-              dispatch(
-                addUser({
-                  uid: uid,
-                  email: email,
-                  displayName: displayName,
-                  photoURL: photoURL,
-                })
-              );
-              navigate("/browse");
-              // ...
-            })
-            .catch((error) => {
-              // An error occurred
-              setErrorMessage(error.message);
-              // ...
-            });
-          console.log(user);
 
           //...
         })
         .catch((error) => {
           const errorCode = error.code;
           const errorMessage = error.message;
+
           setErrorMessage(errorCode + "-" + errorMessage);
         });
     }
