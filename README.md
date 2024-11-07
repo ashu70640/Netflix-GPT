@@ -57,3 +57,5 @@
 ->netflix-gpt
 -search bar
 -movie suggestion
+
+->used a concept of memoisation to avoid making api calls again and again instead will pick the data from redux store.
